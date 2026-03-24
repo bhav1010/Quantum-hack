@@ -1,0 +1,1388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Polarization Optics — Lab Explainer</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #05080f;
+    --bg2:       #080d18;
+    --panel:     #0b1323;
+    --border:    #162847;
+    --cyan:      #00d4ff;
+    --violet:    #7c6cf7;
+    --pink:      #f04f8c;
+    --gold:      #fbbf24;
+    --green:     #10d98f;
+    --text:      #c8d8f0;
+    --muted:     #4d6a90;
+    --white:     #eef4ff;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px;
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  /* ── NOISE OVERLAY ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.5;
+  }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 40px;
+    background: rgba(5,8,15,0.92);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.3rem;
+    letter-spacing: 3px;
+    color: var(--cyan);
+  }
+  .nav-links { display: flex; gap: 28px; }
+  .nav-links a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 0.78rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-family: 'Space Mono', monospace;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--cyan); }
+
+  /* ── HERO ── */
+  .hero {
+    position: relative;
+    min-height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+    padding: 100px 40px 60px;
+  }
+  .hero-bg {
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse 70% 60% at 60% 40%, rgba(0,212,255,0.07) 0%, transparent 70%),
+                radial-gradient(ellipse 50% 50% at 20% 80%, rgba(124,108,247,0.08) 0%, transparent 60%),
+                radial-gradient(ellipse 40% 40% at 80% 70%, rgba(240,79,140,0.06) 0%, transparent 60%);
+  }
+  .hero-canvas { position: absolute; inset: 0; opacity: 0.5; }
+  .hero-content {
+    position: relative; z-index: 2;
+    max-width: 900px; text-align: center;
+  }
+  .hero-eyebrow {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 4px;
+    color: var(--cyan);
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    opacity: 0;
+    animation: fadeUp 0.8s 0.2s forwards;
+  }
+  .hero-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(3.5rem, 10vw, 8rem);
+    line-height: 0.9;
+    letter-spacing: 2px;
+    color: var(--white);
+    margin-bottom: 16px;
+    opacity: 0;
+    animation: fadeUp 0.8s 0.4s forwards;
+  }
+  .hero-title span { color: var(--cyan); }
+  .hero-subtitle {
+    font-size: 1.1rem;
+    color: var(--muted);
+    max-width: 560px;
+    margin: 0 auto 40px;
+    opacity: 0;
+    animation: fadeUp 0.8s 0.6s forwards;
+  }
+  .hero-pills {
+    display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;
+    opacity: 0;
+    animation: fadeUp 0.8s 0.8s forwards;
+  }
+  .pill {
+    background: rgba(0,212,255,0.08);
+    border: 1px solid rgba(0,212,255,0.2);
+    color: var(--cyan);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 1.5px;
+    padding: 6px 16px;
+    border-radius: 100px;
+  }
+  .pill.violet { background: rgba(124,108,247,0.08); border-color: rgba(124,108,247,0.2); color: var(--violet); }
+  .pill.pink   { background: rgba(240,79,140,0.08);  border-color: rgba(240,79,140,0.2);  color: var(--pink); }
+  .pill.gold   { background: rgba(251,191,36,0.08);  border-color: rgba(251,191,36,0.2);  color: var(--gold); }
+
+  /* ── SCROLL INDICATOR ── */
+  .scroll-hint {
+    position: absolute; bottom: 32px; left: 50%; transform: translateX(-50%);
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 2px;
+    animation: fadeUp 1s 1.5s both;
+  }
+  .scroll-dot {
+    width: 1px; height: 50px;
+    background: linear-gradient(to bottom, var(--cyan), transparent);
+    animation: scrollPulse 2s infinite;
+  }
+
+  /* ── SECTION WRAPPER ── */
+  section { position: relative; padding: 80px 40px; max-width: 1200px; margin: 0 auto; }
+  .section-divider {
+    width: 100%; height: 1px;
+    background: linear-gradient(to right, transparent, var(--border), transparent);
+    margin: 0 auto;
+    max-width: 1200px;
+  }
+
+  /* ── SECTION LABEL ── */
+  .sec-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--cyan);
+    margin-bottom: 12px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .sec-label::before {
+    content: '';
+    width: 32px; height: 1px;
+    background: var(--cyan);
+  }
+  .sec-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(2.2rem, 5vw, 3.8rem);
+    line-height: 1;
+    letter-spacing: 1px;
+    color: var(--white);
+    margin-bottom: 16px;
+  }
+  .sec-title span { color: var(--cyan); }
+  .sec-desc {
+    font-size: 1rem;
+    color: var(--muted);
+    max-width: 560px;
+    margin-bottom: 50px;
+  }
+
+  /* ── WHAT IS POLARIZATION ── */
+  .concept-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+  }
+  @media (max-width: 768px) { .concept-grid { grid-template-columns: 1fr; } }
+
+  .concept-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.3s, transform 0.3s;
+  }
+  .concept-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(to right, var(--cyan), var(--violet));
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .concept-card:hover { border-color: rgba(0,212,255,0.3); transform: translateY(-3px); }
+  .concept-card:hover::before { opacity: 1; }
+  .card-icon {
+    width: 44px; height: 44px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem;
+    margin-bottom: 16px;
+  }
+  .card-icon.cyan   { background: rgba(0,212,255,0.1); }
+  .card-icon.violet { background: rgba(124,108,247,0.1); }
+  .card-icon.pink   { background: rgba(240,79,140,0.1); }
+  .card-icon.gold   { background: rgba(251,191,36,0.1); }
+  .card-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--white);
+    margin-bottom: 10px;
+  }
+  .card-body { font-size: 0.9rem; color: var(--muted); line-height: 1.75; }
+
+  /* ── WAVE ILLUSTRATION ── */
+  .wave-demo {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 32px;
+    margin-bottom: 40px;
+    position: relative;
+    overflow: hidden;
+  }
+  .wave-demo canvas { width: 100%; display: block; }
+  .wave-demo-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-align: center;
+    margin-top: 12px;
+  }
+
+  /* ── PIPELINE / COMPONENTS ── */
+  .pipeline-wrap {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 32px;
+    margin-bottom: 30px;
+  }
+  .pipeline-title {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--muted);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 24px;
+  }
+  .pipeline-steps {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    overflow-x: auto;
+    padding-bottom: 8px;
+  }
+  .pipe-step {
+    flex: 1;
+    min-width: 120px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+  }
+  .pipe-step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 30px; right: -1px;
+    width: 100%; height: 2px;
+    background: linear-gradient(to right, var(--border), transparent);
+    z-index: 0;
+  }
+  .pipe-node {
+    width: 62px; height: 62px;
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.6rem;
+    border: 1px solid var(--border);
+    background: var(--bg2);
+    position: relative; z-index: 1;
+    margin-bottom: 12px;
+    transition: transform 0.2s;
+    cursor: default;
+  }
+  .pipe-node:hover { transform: scale(1.1); }
+  .pipe-node.active { border-color: var(--cyan); box-shadow: 0 0 20px rgba(0,212,255,0.2); }
+  .pipe-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    text-align: center;
+    line-height: 1.4;
+  }
+
+  /* ── COMPONENT DETAIL CARDS ── */
+  .component-rows { display: flex; flex-direction: column; gap: 20px; }
+  .comp-row {
+    display: grid;
+    grid-template-columns: 80px 1fr 1fr;
+    gap: 24px;
+    align-items: center;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px 24px;
+    transition: border-color 0.3s;
+  }
+  .comp-row:hover { border-color: rgba(0,212,255,0.3); }
+  .comp-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 3rem;
+    color: var(--border);
+    line-height: 1;
+  }
+  .comp-name {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--white);
+    margin-bottom: 4px;
+  }
+  .comp-desc { font-size: 0.85rem; color: var(--muted); }
+  .comp-formula {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--cyan);
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    line-height: 1.6;
+  }
+  @media (max-width: 768px) { .comp-row { grid-template-columns: 1fr; } .comp-num { display: none; } }
+
+  /* ── MALUS LAW ── */
+  .malus-wrap {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    align-items: start;
+  }
+  @media (max-width: 768px) { .malus-wrap { grid-template-columns: 1fr; } }
+  .malus-canvas-wrap {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+  }
+
+  /* ── STOKES ── */
+  .stokes-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 30px;
+  }
+  @media (max-width: 768px) { .stokes-grid { grid-template-columns: repeat(2, 1fr); } }
+  .stokes-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    text-align: center;
+  }
+  .stokes-sym {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 3.5rem;
+    color: var(--white);
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+  .stokes-name { font-size: 0.72rem; color: var(--cyan); letter-spacing: 2px; font-family: 'Space Mono', monospace; margin-bottom: 8px; }
+  .stokes-eq { font-family: 'Space Mono', monospace; font-size: 0.72rem; color: var(--muted); }
+
+  /* ── LAB SETUP ── */
+  .lab-canvas-wrap {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 32px;
+    margin-bottom: 30px;
+  }
+  .lab-steps {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+  @media (max-width: 768px) { .lab-steps { grid-template-columns: 1fr; } }
+  .lab-step {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px;
+  }
+  .lab-step-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.5rem;
+    color: var(--violet);
+    line-height: 1;
+    margin-bottom: 10px;
+  }
+  .lab-step-title { font-size: 0.95rem; font-weight: 600; color: var(--white); margin-bottom: 8px; }
+  .lab-step-body  { font-size: 0.85rem; color: var(--muted); }
+
+  /* ── OBSERVATIONS ── */
+  .obs-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+  }
+  .obs-table th {
+    background: var(--bg2);
+    color: var(--cyan);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  .obs-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    vertical-align: top;
+  }
+  .obs-table tr:last-child td { border-bottom: none; }
+  .obs-table tr:hover td { background: rgba(0,212,255,0.02); }
+  .tag {
+    display: inline-block;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    padding: 3px 10px;
+    border-radius: 100px;
+    background: rgba(0,212,255,0.08);
+    color: var(--cyan);
+    letter-spacing: 1px;
+  }
+  .tag.violet { background: rgba(124,108,247,0.08); color: var(--violet); }
+  .tag.pink   { background: rgba(240,79,140,0.08);  color: var(--pink); }
+
+  /* ── WHAT WE LEARNED ── */
+  .learnings { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+  @media (max-width: 900px) { .learnings { grid-template-columns: 1fr; } }
+  .learn-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    position: relative;
+  }
+  .learn-accent { width: 32px; height: 3px; border-radius: 2px; margin-bottom: 16px; }
+  .learn-title { font-size: 1rem; font-weight: 600; color: var(--white); margin-bottom: 10px; }
+  .learn-body  { font-size: 0.88rem; color: var(--muted); line-height: 1.75; }
+
+  /* ── FOOTER ── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 40px;
+    text-align: center;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--muted);
+    letter-spacing: 2px;
+  }
+  footer span { color: var(--cyan); }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes scrollPulse {
+    0%, 100% { opacity: 0.3; transform: scaleY(1); }
+    50%       { opacity: 1;   transform: scaleY(1.2); }
+  }
+
+  /* ── INTERSECTION OBSERVER CLASSES ── */
+  .reveal { opacity: 0; transform: translateY(30px); transition: opacity 0.7s, transform 0.7s; }
+  .reveal.visible { opacity: 1; transform: none; }
+
+  /* ── BACK BUTTON ── */
+  .back-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--cyan);
+    text-decoration: none;
+    border: 1px solid var(--border);
+    padding: 8px 18px;
+    border-radius: 100px;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .back-btn:hover { border-color: var(--cyan); background: rgba(0,212,255,0.06); }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">🔬 POLOPT</div>
+  <div class="nav-links">
+    <a href="#what">Polarization</a>
+    <a href="#components">Components</a>
+    <a href="#malus">Malus Law</a>
+    <a href="#lab">Lab Setup</a>
+    <a href="#results">Results</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-bg"></div>
+  <canvas class="hero-canvas" id="heroCanvas"></canvas>
+  <div class="hero-content">
+    <div class="hero-eyebrow">Physics Laboratory Experiment · Optics</div>
+    <h1 class="hero-title">POLARIZATION<br><span>OPTICS</span><br>LAB</h1>
+    <p class="hero-subtitle">A complete visual guide to understanding how light polarization works — from fundamental physics to our hands-on lab experiment.</p>
+    <div class="hero-pills">
+      <span class="pill">Jones Calculus</span>
+      <span class="pill violet">Wave Plates</span>
+      <span class="pill pink">Malus' Law</span>
+      <span class="pill gold">Stokes Parameters</span>
+    </div>
+  </div>
+  <div class="scroll-hint">
+    <span>SCROLL</span>
+    <div class="scroll-dot"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- SECTION 1: WHAT IS POLARIZATION -->
+<div class="section-divider"></div>
+<section id="what">
+  <div class="reveal">
+    <div class="sec-label">Section 01</div>
+    <h2 class="sec-title">WHAT IS<br><span>POLARIZATION?</span></h2>
+    <p class="sec-desc">Light is an electromagnetic wave. Polarization describes the direction that the electric field oscillates as the wave travels through space.</p>
+  </div>
+
+  <!-- Live wave animation -->
+  <div class="wave-demo reveal">
+    <canvas id="waveCanvas" height="180"></canvas>
+    <div class="wave-demo-label">LIVE — Transverse oscillation of the electric field vector. Ex (blue) and Ey (pink) components combine into the total polarization state.</div>
+  </div>
+
+  <div class="concept-grid reveal">
+    <div class="concept-card">
+      <div class="card-icon cyan">🌊</div>
+      <div class="card-title">Unpolarized Light</div>
+      <div class="card-body">In natural light (like the sun), photons vibrate in all possible directions perpendicular to travel. The electric field oscillates randomly — we say the light is <em>unpolarized</em>. When averaged over time, there's no preferred direction.</div>
+    </div>
+    <div class="concept-card">
+      <div class="card-icon violet">↕</div>
+      <div class="card-title">Linear Polarization</div>
+      <div class="card-body">After passing through a linear polarizer, the electric field is confined to oscillate along a single axis. We describe this by a polarization angle θ: 0° = horizontal, 90° = vertical, 45° = diagonal.</div>
+    </div>
+    <div class="concept-card">
+      <div class="card-icon pink">🌀</div>
+      <div class="card-title">Circular Polarization</div>
+      <div class="card-body">When two equal-amplitude, orthogonal components have a 90° phase difference (δ = π/2), the E-field tip traces a circle over time. It can be Left Circular (LCP) or Right Circular (RCP) depending on the sign of δ.</div>
+    </div>
+    <div class="concept-card">
+      <div class="card-icon gold">⬡</div>
+      <div class="card-title">Elliptical Polarization</div>
+      <div class="card-body">The most general case — the E-field tip traces an ellipse. Linear and circular polarization are just special cases. Described by two amplitudes (Ax, Ay) and a phase difference δ between Ex and Ey components.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- SECTION 2: OPTICAL COMPONENTS -->
+<div class="section-divider"></div>
+<section id="components">
+  <div class="reveal">
+    <div class="sec-label">Section 02</div>
+    <h2 class="sec-title">OPTICAL<br><span>COMPONENTS</span></h2>
+    <p class="sec-desc">Our experiment uses a sequence of optical elements. Each transforms the polarization state of the beam — described mathematically using Jones matrices.</p>
+  </div>
+
+  <!-- Pipeline diagram -->
+  <div class="pipeline-wrap reveal">
+    <div class="pipeline-title">// Optical Pipeline</div>
+    <div class="pipeline-steps">
+      <div class="pipe-step">
+        <div class="pipe-node active" title="Coherent light source">💡</div>
+        <div class="pipe-label">Laser<br>Source</div>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-node active" style="border-color:var(--cyan)" title="Linear polarizer">🔆</div>
+        <div class="pipe-label">Polarizer<br>θ = 0–180°</div>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-node" style="border-color:var(--violet)" title="Quarter wave plate">⬡</div>
+        <div class="pipe-label">QWP<br>Γ = 90°</div>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-node" style="border-color:var(--pink)" title="Half wave plate">◈</div>
+        <div class="pipe-label">HWP<br>Γ = 180°</div>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-node active" style="border-color:var(--green)" title="Analyzer polarizer">🔍</div>
+        <div class="pipe-label">Analyzer<br>θ = 0–360°</div>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-node active" style="border-color:var(--gold)" title="Photodetector">📡</div>
+        <div class="pipe-label">Sensor<br>I = |E|²</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Component details -->
+  <div class="component-rows reveal">
+    <div class="comp-row">
+      <div class="comp-num">01</div>
+      <div>
+        <div class="comp-name">💡 Laser Source</div>
+        <div class="comp-desc">A coherent, monochromatic light source. Produces a beam with a well-defined wavelength and phase. In our lab we used a red diode laser (λ ≈ 650 nm). The output is often already partially polarized — we treat it as the initial Jones vector E_in.</div>
+      </div>
+      <div class="comp-formula">
+        E_in = [Ex, Ey]ᵀ<br>
+        e.g. horizontal:<br>
+        E = [1, 0]ᵀ
+      </div>
+    </div>
+    <div class="comp-row">
+      <div class="comp-num">02</div>
+      <div>
+        <div class="comp-name">🔆 Linear Polarizer</div>
+        <div class="comp-desc">A polarizing filter that only transmits the component of E-field along its transmission axis. Unpolarized light becomes linearly polarized. When stacked at angle θ to a previous polarizer, intensity follows Malus' Law. The polarizer axis is the key control in our experiment.</div>
+      </div>
+      <div class="comp-formula">
+        M_pol(θ) =<br>
+        [[cos²θ,  cosθ sinθ],<br>
+        &nbsp;[cosθ sinθ, sin²θ]]
+      </div>
+    </div>
+    <div class="comp-row">
+      <div class="comp-num">03</div>
+      <div>
+        <div class="comp-name">⬡ Quarter-Wave Plate (QWP)</div>
+        <div class="comp-desc">Introduces a 90° (λ/4) phase retardation between the fast and slow axes. Its key effect: linearly polarized light at 45° to the fast axis becomes circularly polarized. Used to convert between linear and circular polarization states. Fast axis orientation α controls the transformation.</div>
+      </div>
+      <div class="comp-formula">
+        Γ = 90° (λ/4)<br>
+        Linear (45°) → Circular<br>
+        M = R(-α)·diag(e^{-iπ/4},<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;e^{+iπ/4})·R(α)
+      </div>
+    </div>
+    <div class="comp-row">
+      <div class="comp-num">04</div>
+      <div>
+        <div class="comp-name">◈ Half-Wave Plate (HWP)</div>
+        <div class="comp-desc">Introduces a 180° (λ/2) phase retardation. Rotates the plane of linear polarization by twice the fast axis angle (2α). Converts LCP ↔ RCP. Equivalent to a mirror reflection of the polarization state. Highly useful for arbitrary polarization rotation.</div>
+      </div>
+      <div class="comp-formula">
+        Γ = 180° (λ/2)<br>
+        Rotates pol. by 2α<br>
+        LCP ↔ RCP<br>
+        M = R(-α)·diag(-i, +i)·R(α)
+      </div>
+    </div>
+    <div class="comp-row">
+      <div class="comp-num">05</div>
+      <div>
+        <div class="comp-name">🔍 Analyzer</div>
+        <div class="comp-desc">Identical to a polarizer, but used as the detection element. Rotating the analyzer while measuring intensity reveals the polarization state of the incoming beam. A complete 360° rotation sweep gives the Malus' Law curve for that state.</div>
+      </div>
+      <div class="comp-formula">
+        I(θ) = |M_pol(θ)·E|²<br>
+        = (E · ê_θ)²<br><br>
+        Measures projection<br>onto polarization axis
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- SECTION 3: MALUS' LAW -->
+<div class="section-divider"></div>
+<section id="malus">
+  <div class="reveal">
+    <div class="sec-label">Section 03</div>
+    <h2 class="sec-title">MALUS'<br><span>LAW</span></h2>
+    <p class="sec-desc">The cornerstone of polarization optics. States how intensity changes when linearly polarized light passes through a rotated analyzer.</p>
+  </div>
+
+  <div class="malus-wrap reveal">
+    <div>
+      <div class="malus-canvas-wrap">
+        <canvas id="malusCanvas" height="240"></canvas>
+        <div class="wave-demo-label" style="margin-top:8px">I(θ) = I₀ · cos²(θ) — Interactive: animating analyzer rotation</div>
+      </div>
+
+      <div class="concept-card" style="margin-bottom:16px">
+        <div class="card-title" style="font-family:'Space Mono',monospace;font-size:1.1rem;color:var(--cyan)">I = I₀ · cos²(θ)</div>
+        <div class="card-body" style="margin-top:12px">
+          Where <strong style="color:var(--white)">I₀</strong> is the initial intensity after the first polarizer, and <strong style="color:var(--white)">θ</strong> is the angle between the polarizer transmission axis and the analyzer axis.<br><br>
+          ▸ At θ = 0°: I = I₀ (maximum, parallel polarizers)<br>
+          ▸ At θ = 90°: I = 0 (minimum, crossed polarizers)<br>
+          ▸ At θ = 45°: I = I₀/2 (half intensity)
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="concept-card" style="margin-bottom:16px">
+        <div class="card-icon cyan">📐</div>
+        <div class="card-title">Physical Intuition</div>
+        <div class="card-body">Think of the E-field as a vector with magnitude E₀. The analyzer only passes the component along its axis — a projection. If the angle between them is θ, the transmitted amplitude is E₀·cosθ. Since intensity ∝ amplitude², we get I = I₀·cos²θ.</div>
+      </div>
+
+      <div class="concept-card" style="margin-bottom:16px">
+        <div class="card-icon violet">🔄</div>
+        <div class="card-title">Effect of Wave Plates</div>
+        <div class="card-body">
+          <strong style="color:var(--white)">With QWP:</strong> Linear → Circular polarization. The cos²θ curve flattens to a nearly uniform intensity regardless of analyzer angle.<br><br>
+          <strong style="color:var(--white)">With HWP:</strong> Rotates the polarization axis by 2α. The cos²θ curve shifts horizontally by 2α.<br><br>
+          Our simulation shows all three curves simultaneously in the Hardware mode.
+        </div>
+      </div>
+
+      <div class="concept-card">
+        <div class="card-icon gold">📊</div>
+        <div class="card-title">Experimental Verification</div>
+        <div class="card-body">In the lab, we rotated the analyzer in 5° steps from 0° to 360° and recorded the photodetector voltage. The resulting curve closely matched the theoretical cos²θ prediction, validating our optical alignment and component quality.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- SECTION 4: STOKES PARAMETERS -->
+<div class="section-divider"></div>
+<section id="stokes">
+  <div class="reveal">
+    <div class="sec-label">Section 04</div>
+    <h2 class="sec-title">STOKES<br><span>PARAMETERS</span></h2>
+    <p class="sec-desc">A complete description of any polarization state using four real-valued measurable quantities — including partially polarized light that Jones vectors cannot describe.</p>
+  </div>
+
+  <div class="stokes-grid reveal">
+    <div class="stokes-card">
+      <div class="stokes-sym" style="color:var(--cyan)">S₀</div>
+      <div class="stokes-name">Total Intensity</div>
+      <div class="stokes-eq">|Ex|² + |Ey|²</div>
+    </div>
+    <div class="stokes-card">
+      <div class="stokes-sym" style="color:var(--violet)">S₁</div>
+      <div class="stokes-name">H vs V linear</div>
+      <div class="stokes-eq">|Ex|² − |Ey|²</div>
+    </div>
+    <div class="stokes-card">
+      <div class="stokes-sym" style="color:var(--pink)">S₂</div>
+      <div class="stokes-name">±45° linear</div>
+      <div class="stokes-eq">2·Re(Ex·Ey*)</div>
+    </div>
+    <div class="stokes-card">
+      <div class="stokes-sym" style="color:var(--gold)">S₃</div>
+      <div class="stokes-name">Circular</div>
+      <div class="stokes-eq">2·Im(Ex·Ey*)</div>
+    </div>
+  </div>
+
+  <div class="concept-grid reveal">
+    <div class="concept-card">
+      <div class="card-icon cyan">🌐</div>
+      <div class="card-title">Poincaré Sphere</div>
+      <div class="card-body">Normalizing by S₀ gives (s₁, s₂, s₃) — a point on or inside a unit sphere called the Poincaré sphere. North pole = RCP. South pole = LCP. Equator = all linear polarization states. Any point on the surface = fully polarized. Interior = partially polarized.</div>
+    </div>
+    <div class="concept-card">
+      <div class="card-icon violet">🔬</div>
+      <div class="card-title">Why Stokes?</div>
+      <div class="card-body">Jones vectors only work for fully coherent light. Stokes parameters are measurable intensities — you can determine them directly from 4–6 polarimetric measurements with a polarizer and wave plate. This is what real instruments (polarimeters, ellipsometers) do in practice.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- SECTION 5: LAB SETUP -->
+<div class="section-divider"></div>
+<section id="lab">
+  <div class="reveal">
+    <div class="sec-label">Section 05</div>
+    <h2 class="sec-title">OUR LAB<br><span>SETUP</span></h2>
+    <p class="sec-desc">How we built and conducted the experiment — from optical bench alignment to data collection and analysis.</p>
+  </div>
+
+  <!-- Lab bench illustration -->
+  <div class="lab-canvas-wrap reveal">
+    <canvas id="labCanvas" height="220"></canvas>
+    <div class="wave-demo-label" style="margin-top:8px">Schematic: Optical bench layout used in our experiment</div>
+  </div>
+
+  <div class="lab-steps reveal">
+    <div class="lab-step">
+      <div class="lab-step-num">01</div>
+      <div class="lab-step-title">🔴 Laser Alignment</div>
+      <div class="lab-step-body">We set up a 650 nm diode laser on an optical rail, ensuring the beam was level and well-collimated. The first step was aligning all elements to be co-linear with the beam path. A screen at the far end confirmed alignment.</div>
+    </div>
+    <div class="lab-step">
+      <div class="lab-step-num">02</div>
+      <div class="lab-step-title">🔆 Polarizer Placement</div>
+      <div class="lab-step-body">A calibrated linear polarizer (extinction ratio > 1000:1) was mounted first in the beam path. We set it to 0° (horizontal) as the reference. The polarizer degree scale was verified by maximizing and minimizing transmission.</div>
+    </div>
+    <div class="lab-step">
+      <div class="lab-step-num">03</div>
+      <div class="lab-step-title">⬡ Wave Plate Insertion</div>
+      <div class="lab-step-body">QWP and HWP mounts were placed after the polarizer. Wave plates were oriented by finding the extinction condition (rotating until the output flicked between max and min). The fast axis was identified by the minimum reading.</div>
+    </div>
+    <div class="lab-step">
+      <div class="lab-step-num">04</div>
+      <div class="lab-step-title">🔍 Analyzer Rotation</div>
+      <div class="lab-step-body">The rotating analyzer was set on a precision rotation stage. We swept from 0° to 360° in 5° increments, recording the photodetector voltage at each step. All readings were normalized to the maximum value.</div>
+    </div>
+    <div class="lab-step">
+      <div class="lab-step-num">05</div>
+      <div class="lab-step-title">📡 Detection & Recording</div>
+      <div class="lab-step-body">A silicon photodetector (Thorlabs PDA36A) connected to a multimeter recorded intensity as voltage. Data was logged into a spreadsheet, then compared against the theoretical Jones calculus predictions from our simulation.</div>
+    </div>
+    <div class="lab-step">
+      <div class="lab-step-num">06</div>
+      <div class="lab-step-title">📊 Analysis & Simulation</div>
+      <div class="lab-step-body">Experimental curves were overlaid with our Streamlit simulation output. We compared Malus' Law curves, polarization ellipses, and Stokes parameters. Agreement within ≈ 3% confirmed accurate alignment and validated our Jones calculus engine.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- SECTION 6: RESULTS -->
+<div class="section-divider"></div>
+<section id="results">
+  <div class="reveal">
+    <div class="sec-label">Section 06</div>
+    <h2 class="sec-title">EXPERIMENTAL<br><span>OBSERVATIONS</span></h2>
+    <p class="sec-desc">Key findings from our lab experiment — what each configuration produced and how it matched theory.</p>
+  </div>
+
+  <div class="reveal" style="overflow-x:auto; margin-bottom:40px;">
+    <table class="obs-table">
+      <thead>
+        <tr>
+          <th>Experiment</th>
+          <th>Setup</th>
+          <th>Observed</th>
+          <th>Predicted by Theory</th>
+          <th>Type</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong style="color:var(--white)">Malus' Law</strong></td>
+          <td>Polarizer (0°) → Analyzer (rotating)</td>
+          <td>Smooth cos²θ curve, near-zero at 90°</td>
+          <td>I = I₀ cos²θ</td>
+          <td><span class="tag">Linear</span></td>
+        </tr>
+        <tr>
+          <td><strong style="color:var(--white)">Crossed Polarizers</strong></td>
+          <td>Pol (0°) → Analyzer (90°)</td>
+          <td>Extinction — no light through</td>
+          <td>I = 0 at θ = 90°</td>
+          <td><span class="tag">Linear</span></td>
+        </tr>
+        <tr>
+          <td><strong style="color:var(--white)">QWP at 45°</strong></td>
+          <td>Pol (0°) → QWP (45°) → Analyzer</td>
+          <td>Flat intensity vs angle — constant output</td>
+          <td>Circular: I = I₀/2 ∀θ</td>
+          <td><span class="tag violet">Circular</span></td>
+        </tr>
+        <tr>
+          <td><strong style="color:var(--white)">HWP Rotation</strong></td>
+          <td>Pol (0°) → HWP (22.5°) → Analyzer</td>
+          <td>cos²θ curve shifted by 45°</td>
+          <td>Pol. rotated by 2×22.5°=45°</td>
+          <td><span class="tag violet">Linear rotated</span></td>
+        </tr>
+        <tr>
+          <td><strong style="color:var(--white)">Elliptical State</strong></td>
+          <td>Pol (45°) → QWP (0°) → Analyzer</td>
+          <td>Elliptical cos² curve (non-zero min)</td>
+          <td>Elliptical pol., S3 ≠ 0</td>
+          <td><span class="tag pink">Elliptical</span></td>
+        </tr>
+        <tr>
+          <td><strong style="color:var(--white)">LCP vs RCP</strong></td>
+          <td>QWP at ±45°</td>
+          <td>Both flat, opposite Stokes S₃ sign</td>
+          <td>S₃ = ±1 (pure circular)</td>
+          <td><span class="tag pink">Circular</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- What we learned -->
+  <div class="sec-label reveal" style="margin-bottom:16px">What We Understood</div>
+  <div class="learnings reveal">
+    <div class="learn-card">
+      <div class="learn-accent" style="background:var(--cyan)"></div>
+      <div class="learn-title">Jones Calculus Works</div>
+      <div class="learn-body">The 2×2 Jones matrix formalism accurately predicts the output polarization state for any combination of linear optical elements. Our experimental results matched the simulation to within 3%, confirming both our alignment and the mathematical model.</div>
+    </div>
+    <div class="learn-card">
+      <div class="learn-accent" style="background:var(--violet)"></div>
+      <div class="learn-title">Wave Plates are Powerful</div>
+      <div class="learn-body">A quarter-wave plate can completely change the character of polarization — converting linear to circular. This is the basis of many real optical instruments: 3D cinema glasses, LCDs, optical fiber sensors, and quantum communication systems all rely on this principle.</div>
+    </div>
+    <div class="learn-card">
+      <div class="learn-accent" style="background:var(--pink)"></div>
+      <div class="learn-title">Stokes is Measurable</div>
+      <div class="learn-body">Unlike Jones vectors (which are mathematical abstractions), Stokes parameters are direct intensity measurements. We computed them from our detector readings and confirmed they correctly indicated circular vs. linear states — a key real-world polarimetry technique.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- SECTION 7: SIMULATION LINK -->
+<div class="section-divider"></div>
+<section style="text-align:center; padding: 80px 40px;">
+  <div class="reveal">
+    <div class="sec-label" style="justify-content:center">Try It Yourself</div>
+    <h2 class="sec-title">EXPLORE THE<br><span>SIMULATION</span></h2>
+    <p class="sec-desc" style="margin: 0 auto 40px; text-align:center">Our interactive Streamlit app lets you control every optical element in real time — see the polarization ellipse, Malus' Law curve, and Stokes parameters update live.</p>
+    <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap">
+      <a href="#" class="back-btn" style="font-size:0.8rem;padding:12px 28px">▶ Launch Simulation</a>
+      <a href="#what" class="back-btn" style="font-size:0.8rem;padding:12px 28px;border-color:var(--violet);color:var(--violet)">↑ Back to Top</a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <span>POLARIZATION OPTICS VISUAL LAB</span> · Jones Calculus Engine · Built with Streamlit + NumPy + Matplotlib<br>
+  <span style="color:var(--muted);font-size:0.62rem;margin-top:8px;display:block">Physics Experiment Documentation · Laboratory Report</span>
+</footer>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<script>
+// ─── HERO CANVAS — floating ellipse particles ───────────────────────────────
+(function() {
+  const cv = document.getElementById('heroCanvas');
+  const ctx = cv.getContext('2d');
+  let t = 0;
+
+  function resize() {
+    cv.width  = cv.offsetParent ? cv.offsetParent.offsetWidth  : window.innerWidth;
+    cv.height = cv.offsetParent ? cv.offsetParent.offsetHeight : window.innerHeight;
+  }
+  resize(); window.addEventListener('resize', resize);
+
+  const particles = Array.from({length: 24}, (_, i) => ({
+    x: Math.random(), y: Math.random(),
+    ax: 0.1 + Math.random() * 0.4,
+    ay: 0.05 + Math.random() * 0.35,
+    d: Math.random() * Math.PI * 2,
+    speed: 0.003 + Math.random() * 0.008,
+    hue: Math.random() > 0.5 ? 195 : (Math.random() > 0.5 ? 260 : 330),
+    size: 30 + Math.random() * 80,
+    phase: Math.random() * Math.PI * 2,
+  }));
+
+  function draw() {
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    const W = cv.width, H = cv.height;
+
+    particles.forEach(p => {
+      p.d += p.speed;
+      const px = (p.x * W + Math.cos(p.d) * p.size * 3) % W;
+      const py = (p.y * H + Math.sin(p.d * 0.7) * p.size * 2) % H;
+
+      // draw mini polarization ellipse
+      ctx.save();
+      ctx.translate(px, py);
+      ctx.strokeStyle = `hsla(${p.hue}, 80%, 60%, 0.15)`;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      for (let i = 0; i <= 60; i++) {
+        const ang = (i / 60) * Math.PI * 2;
+        const ex = p.ax * p.size * Math.cos(ang);
+        const ey = p.ay * p.size * Math.cos(ang + p.phase);
+        i === 0 ? ctx.moveTo(ex, ey) : ctx.lineTo(ex, ey);
+      }
+      ctx.stroke();
+      ctx.restore();
+    });
+
+    t += 0.016;
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+// ─── WAVE CANVAS ─────────────────────────────────────────────────────────────
+(function() {
+  const cv = document.getElementById('waveCanvas');
+  const ctx = cv.getContext('2d');
+  let t = 0;
+
+  function resize() {
+    cv.width  = cv.parentElement.clientWidth - 64;
+    cv.height = 180;
+  }
+  resize(); window.addEventListener('resize', resize);
+
+  function draw() {
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    ctx.fillStyle = '#0b1323';
+    ctx.fillRect(0, 0, cv.width, cv.height);
+
+    const W = cv.width, H = 180;
+    const midY = H / 2;
+    const amp = 50;
+
+    // grid
+    ctx.strokeStyle = '#162847';
+    ctx.lineWidth = 0.5;
+    for (let y = 0; y < H; y += 30) {
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+    }
+
+    // axis
+    ctx.strokeStyle = '#1e3a5f';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(0, midY); ctx.lineTo(W, midY); ctx.stroke();
+
+    // propagation direction arrow
+    ctx.strokeStyle = '#fbbf2440';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([6, 8]);
+    ctx.beginPath(); ctx.moveTo(20, midY); ctx.lineTo(W-20, midY); ctx.stroke();
+    ctx.setLineDash([]);
+
+    const steps = 300;
+
+    // Ex wave (horizontal, blue)
+    ctx.strokeStyle = '#00d4ff';
+    ctx.lineWidth = 2.5;
+    ctx.shadowColor = '#00d4ff';
+    ctx.shadowBlur = 8;
+    ctx.beginPath();
+    for (let i = 0; i <= steps; i++) {
+      const x = 10 + (i / steps) * (W - 20);
+      const phase = (t * 2) - (i / steps) * Math.PI * 4;
+      const y = midY - amp * Math.cos(phase);
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+
+    // Ey wave (vertical component, pink, phase shifted by δ)
+    const delta = t * 0.8; // slowly changing phase
+    ctx.strokeStyle = '#f04f8c';
+    ctx.lineWidth = 2.5;
+    ctx.shadowColor = '#f04f8c';
+    ctx.shadowBlur = 8;
+    ctx.beginPath();
+    for (let i = 0; i <= steps; i++) {
+      const x = 10 + (i / steps) * (W - 20);
+      const phase = (t * 2) - (i / steps) * Math.PI * 4 + delta;
+      const y = midY - amp * 0.7 * Math.cos(phase);
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // Travelling dots
+    const prog = ((t * 40) % 360) / 360;
+    const dotX = 10 + prog * (W - 20);
+    const ph1 = (t * 2) - prog * Math.PI * 4;
+    const ph2 = (t * 2) - prog * Math.PI * 4 + delta;
+    const dotY1 = midY - amp * Math.cos(ph1);
+    const dotY2 = midY - amp * 0.7 * Math.cos(ph2);
+
+    ctx.beginPath(); ctx.arc(dotX, dotY1, 5, 0, Math.PI*2);
+    ctx.fillStyle = '#00d4ff'; ctx.shadowColor='#00d4ff'; ctx.shadowBlur=14; ctx.fill();
+    ctx.beginPath(); ctx.arc(dotX, dotY2, 5, 0, Math.PI*2);
+    ctx.fillStyle = '#f04f8c'; ctx.shadowColor='#f04f8c'; ctx.shadowBlur=14; ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // labels
+    ctx.fillStyle = '#00d4ff';
+    ctx.font = '11px Space Mono, monospace';
+    ctx.fillText('Ex', 12, 22);
+    ctx.fillStyle = '#f04f8c';
+    ctx.fillText('Ey (δ phase shift)', 40, 22);
+    ctx.fillStyle = '#fbbf2480';
+    ctx.fillText('→ propagation', W - 120, midY - 10);
+
+    t += 0.018;
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+// ─── MALUS LAW CANVAS ────────────────────────────────────────────────────────
+(function() {
+  const cv = document.getElementById('malusCanvas');
+  const ctx = cv.getContext('2d');
+  let t = 0;
+
+  function resize() {
+    cv.width  = cv.parentElement.clientWidth - 48;
+    cv.height = 240;
+  }
+  resize(); window.addEventListener('resize', resize);
+
+  function draw() {
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    ctx.fillStyle = '#0b1323';
+    ctx.fillRect(0, 0, cv.width, cv.height);
+
+    const W = cv.width, H = 240;
+    const pad = { l: 48, r: 20, t: 20, b: 36 };
+    const gW = W - pad.l - pad.r;
+    const gH = H - pad.t - pad.b;
+
+    // grid
+    ctx.strokeStyle = '#162847';
+    ctx.lineWidth = 0.5;
+    for (let i = 0; i <= 4; i++) {
+      const y = pad.t + (i / 4) * gH;
+      ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l + gW, y); ctx.stroke();
+      ctx.fillStyle = '#4d6a90';
+      ctx.font = '9px Space Mono, monospace';
+      ctx.textAlign = 'right';
+      ctx.fillText((1 - i/4).toFixed(1), pad.l - 6, y + 3);
+    }
+    for (let i = 0; i <= 4; i++) {
+      const x = pad.l + (i / 4) * gW;
+      ctx.beginPath(); ctx.moveTo(x, pad.t); ctx.lineTo(x, pad.t + gH); ctx.stroke();
+      ctx.fillStyle = '#4d6a90';
+      ctx.font = '9px Space Mono, monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText((i * 90) + '°', x, H - 8);
+    }
+
+    // axes
+    ctx.strokeStyle = '#2a4a6a';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(pad.l, pad.t); ctx.lineTo(pad.l, pad.t + gH); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(pad.l, pad.t + gH); ctx.lineTo(pad.l + gW, pad.t + gH); ctx.stroke();
+
+    // cos² curve
+    ctx.strokeStyle = '#00d4ff';
+    ctx.lineWidth = 2.5;
+    ctx.shadowColor = '#00d4ff';
+    ctx.shadowBlur = 8;
+    ctx.beginPath();
+    for (let i = 0; i <= 360; i++) {
+      const x = pad.l + (i / 360) * gW;
+      const I = Math.pow(Math.cos(i * Math.PI / 180), 2);
+      const y = pad.t + (1 - I) * gH;
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // fill under curve
+    ctx.beginPath();
+    for (let i = 0; i <= 360; i++) {
+      const x = pad.l + (i / 360) * gW;
+      const I = Math.pow(Math.cos(i * Math.PI / 180), 2);
+      const y = pad.t + (1 - I) * gH;
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.lineTo(pad.l + gW, pad.t + gH);
+    ctx.lineTo(pad.l, pad.t + gH);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(0,212,255,0.06)';
+    ctx.fill();
+
+    // animated analyzer position
+    const animAngle = ((t * 30) % 360);
+    const dotX = pad.l + (animAngle / 360) * gW;
+    const dotI = Math.pow(Math.cos(animAngle * Math.PI / 180), 2);
+    const dotY = pad.t + (1 - dotI) * gH;
+
+    ctx.strokeStyle = '#f04f8c40';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([3, 5]);
+    ctx.beginPath(); ctx.moveTo(dotX, pad.t + gH); ctx.lineTo(dotX, dotY); ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.beginPath(); ctx.arc(dotX, dotY, 6, 0, Math.PI*2);
+    ctx.fillStyle = '#f04f8c';
+    ctx.shadowColor = '#f04f8c'; ctx.shadowBlur = 14;
+    ctx.fill(); ctx.shadowBlur = 0;
+
+    // I= label
+    ctx.fillStyle = '#f04f8c';
+    ctx.font = 'bold 10px Space Mono, monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('θ=' + animAngle.toFixed(0) + '° I=' + dotI.toFixed(2), dotX, pad.t + gH + 16);
+
+    t += 0.016;
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+// ─── LAB BENCH CANVAS ────────────────────────────────────────────────────────
+(function() {
+  const cv = document.getElementById('labCanvas');
+  const ctx = cv.getContext('2d');
+  let t = 0;
+
+  function resize() {
+    cv.width  = cv.parentElement.clientWidth - 64;
+    cv.height = 220;
+  }
+  resize(); window.addEventListener('resize', resize);
+
+  const ELEMS = [
+    { label: 'LASER',    icon: '💡', color: '#fbbf24' },
+    { label: 'POLARIZER',icon: '⊕',  color: '#00d4ff' },
+    { label: 'QWP',      icon: 'λ/4', color: '#7c6cf7' },
+    { label: 'HWP',      icon: 'λ/2', color: '#a78bfa' },
+    { label: 'ANALYZER', icon: '⊕',  color: '#10d98f' },
+    { label: 'SENSOR',   icon: '📡', color: '#f04f8c' },
+  ];
+
+  function draw() {
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    ctx.fillStyle = '#0b1323';
+    ctx.fillRect(0, 0, cv.width, cv.height);
+
+    const W = cv.width, H = 220;
+    const midY = H * 0.45;
+    const spacing = W / (ELEMS.length + 1);
+
+    // optical rail
+    ctx.fillStyle = '#162847';
+    ctx.fillRect(20, midY + 40, W - 40, 8);
+    ctx.fillStyle = '#1e3a5f';
+    ctx.fillRect(20, midY + 40, W - 40, 2);
+
+    // beam
+    const beamStart = spacing * 0.8;
+    const beamEnd   = W - spacing * 0.5;
+
+    // beam glow
+    const grad = ctx.createLinearGradient(beamStart, 0, beamEnd, 0);
+    grad.addColorStop(0, 'rgba(251,191,36,0)');
+    grad.addColorStop(0.05, 'rgba(251,191,36,0.6)');
+    grad.addColorStop(0.9, 'rgba(255,50,50,0.4)');
+    grad.addColorStop(1, 'rgba(255,50,50,0)');
+    ctx.strokeStyle = grad;
+    ctx.lineWidth = 3;
+    ctx.shadowColor = '#fbbf24';
+    ctx.shadowBlur = 12;
+    ctx.beginPath();
+    ctx.moveTo(beamStart, midY);
+    ctx.lineTo(beamEnd, midY);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // elements
+    ELEMS.forEach((el, i) => {
+      const x = spacing * (i + 1);
+      const boxW = 54, boxH = 64;
+      const bx = x - boxW/2, by = midY - boxH/2;
+
+      // post
+      ctx.fillStyle = '#162847';
+      ctx.fillRect(x - 2, midY + 32, 4, 20);
+
+      // box
+      ctx.fillStyle = el.color + '14';
+      ctx.strokeStyle = el.color + '60';
+      ctx.lineWidth = 1.5;
+      ctx.shadowColor = el.color;
+      ctx.shadowBlur = 8;
+      roundRect(ctx, bx, by, boxW, boxH, 10);
+      ctx.fill(); ctx.stroke();
+      ctx.shadowBlur = 0;
+
+      // icon text
+      ctx.fillStyle = el.color;
+      ctx.font = el.icon.length > 2 ? 'bold 11px Space Mono' : '18px Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(el.icon, x, midY);
+
+      // label
+      ctx.fillStyle = el.color + 'bb';
+      ctx.font = '9px Space Mono, monospace';
+      ctx.textBaseline = 'top';
+      ctx.fillText(el.label, x, by + boxH + 8);
+
+      // arrows between elements
+      if (i < ELEMS.length - 1) {
+        const nx = spacing * (i + 2);
+        const ax = x + boxW/2 + 4;
+        const ex = nx - boxW/2 - 4;
+        if (ex > ax + 4) {
+          ctx.strokeStyle = '#2a4a6a';
+          ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(ax, midY); ctx.lineTo(ex, midY); ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(ex, midY - 4); ctx.lineTo(ex + 6, midY); ctx.lineTo(ex, midY + 4);
+          ctx.fillStyle = '#2a4a6a';
+          ctx.fill();
+        }
+      }
+    });
+
+    // dimension bar
+    ctx.strokeStyle = '#1e3a5f';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4,6]);
+    ctx.beginPath(); ctx.moveTo(20, H - 20); ctx.lineTo(W - 20, H - 20); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#2a4a6a';
+    ctx.font = '9px Space Mono, monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('←  optical rail (≈ 60 cm)  →', W/2, H - 20);
+
+    t += 0.02;
+    requestAnimationFrame(draw);
+  }
+
+  function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x+r, y);
+    ctx.lineTo(x+w-r, y); ctx.arcTo(x+w, y, x+w, y+r, r);
+    ctx.lineTo(x+w, y+h-r); ctx.arcTo(x+w, y+h, x+w-r, y+h, r);
+    ctx.lineTo(x+r, y+h); ctx.arcTo(x, y+h, x, y+h-r, r);
+    ctx.lineTo(x, y+r); ctx.arcTo(x, y, x+r, y, r);
+    ctx.closePath();
+  }
+
+  draw();
+})();
+
+// ─── INTERSECTION OBSERVER — reveal on scroll ─────────────────────────────
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach((e) => {
+    if (e.isIntersecting) { e.target.classList.add('visible'); }
+  });
+}, { threshold: 0.12 });
+
+document.querySelectorAll('.reveal').forEach((el) => observer.observe(el));
+</script>
+</body>
+</html>
