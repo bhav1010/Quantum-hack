@@ -1,11 +1,3 @@
-"""
-╔══════════════════════════════════════════════════════════════════════════╗
-║       POLARIZATION OPTICS VISUAL LAB — Hackathon Demo                  ║
-║       Physics Simulation + Hardware Mapping                             ║
-║       Run: streamlit run app.py                                         ║
-╚══════════════════════════════════════════════════════════════════════════╝
-"""
-
 import streamlit as st
 import streamlit.components.v1 as components
 import numpy as np
@@ -16,8 +8,6 @@ import matplotlib.gridspec as gridspec
 from matplotlib.colors import LinearSegmentedColormap
 
 # ─────────────────────────────────────────────────────────────────────────────
-# PAGE CONFIG
-# ─────────────────────────────────────────────────────────────────────────────
 st.set_page_config(
     page_title="Polarization Optics Visual Lab",
     page_icon="🔬",
@@ -25,6 +15,93 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
+is_light_mode = st.sidebar.toggle("☀️ Light Mode", value=False)
+
+if is_light_mode:
+    c_bg = "#f4f4f5"
+    c_text = "#18181b"
+    c_sb_bg = "linear-gradient(180deg, #e4e4e7 0%, #f4f4f5 100%)"
+    c_brd = "#d4d4d8"
+    c_sb_text = "#3f3f46"
+    c_grad = "linear-gradient(135deg, #0284c7, #4f46e5, #db2777)"
+    c_h2 = "#0284c7"
+    c_h3 = "#4f46e5"
+    c_card = "linear-gradient(135deg, #f4f4f5, #e4e4e7)"
+    c_card_l = "#52525b"
+    c_card_v = "#0284c7"
+    c_card_s = "#71717a"
+    c_tab_th = "#e4e4e7"
+    c_tab_o = "#f4f4f5"
+    c_tab_e = "#e4e4e7"
+    c_info = "linear-gradient(135deg, #e0f2fe, #f0f9ff)"
+    c_info_t = "#0369a1"
+    c_form = "#ffffff"
+    c_script = "#ffffff"
+    c_scrt_t = "#3f3f46"
+    
+    BG = '#f4f4f5'
+    FG = '#18181b'
+    ACCENT  = '#0ea5e9'
+    ACCENT2 = '#6366f1'
+    ACCENT3 = '#ec4899'
+    GRID    = '#d4d4d8'
+    HTML_BG = '#ffffff'
+else:
+    c_bg = "#080c14"
+    c_text = "#c9d4e8"
+    c_sb_bg = "linear-gradient(180deg, #0d1421 0%, #0a1628 100%)"
+    c_brd = "#1e3a5f"
+    c_sb_text = "#a8c0de"
+    c_grad = "linear-gradient(135deg, #38bdf8, #818cf8, #f472b6)"
+    c_h2 = "#38bdf8"
+    c_h3 = "#818cf8"
+    c_card = "linear-gradient(135deg, #0f1f35, #0d1928)"
+    c_card_l = "#4a7fa5"
+    c_card_v = "#38bdf8"
+    c_card_s = "#5a8fa8"
+    c_tab_th = "#0f1f35"
+    c_tab_o = "#080c14"
+    c_tab_e = "#0a1520"
+    c_info = "linear-gradient(135deg, #0a1e35, #081428)"
+    c_info_t = "#8ab4d4"
+    c_form = "#080c14"
+    c_script = "#050a12"
+    c_scrt_t = "#8ab4d4"
+    
+    BG = '#080c14'
+    FG = '#c9d4e8'
+    ACCENT  = '#38bdf8'
+    ACCENT2 = '#818cf8'
+    ACCENT3 = '#f472b6'
+    GRID    = '#0f1f35'
+    HTML_BG = '#07101f'
+
+st.markdown(f"""
+<style>
+  :root {{
+    --c-bg: {c_bg};
+    --c-text: {c_text};
+    --c-sb-bg: {c_sb_bg};
+    --c-brd: {c_brd};
+    --c-sb-text: {c_sb_text};
+    --c-grad: {c_grad};
+    --c-h2: {c_h2};
+    --c-h3: {c_h3};
+    --c-card: {c_card};
+    --c-card-l: {c_card_l};
+    --c-card-v: {c_card_v};
+    --c-card-s: {c_card_s};
+    --c-tab-th: {c_tab_th};
+    --c-tab-o: {c_tab_o};
+    --c-tab-e: {c_tab_e};
+    --c-info: {c_info};
+    --c-info-t: {c_info_t};
+    --c-form: {c_form};
+    --c-script: {c_script};
+    --c-scrt-t: {c_scrt_t};
+  }}
+</style>
+""", unsafe_allow_html=True)
 
 # ─────────────────────────────────────────────────────────────────────────────
 # CUSTOM CSS
@@ -36,93 +113,94 @@ st.markdown("""
   /* Global */
   html, body, [class*="css"] {
     font-family: 'JetBrains Mono', monospace;
-    background-color: #080c14;
-    color: #c9d4e8;
+    background-color: var(--c-bg);
+    color: var(--c-text);
   }
-  .stApp { background: #080c14; }
+  .stApp { background: var(--c-bg); }
 
   /* Sidebar */
   section[data-testid="stSidebar"] {
-    background: linear-gradient(180deg, #0d1421 0%, #0a1628 100%);
-    border-right: 1px solid #1e3a5f;
+    background: var(--c-sb-bg);
+    border-right: 1px solid var(--c-brd);
   }
-  section[data-testid="stSidebar"] * { color: #a8c0de !important; }
+  section[data-testid="stSidebar"] * { color: var(--c-sb-text) !important; }
   section[data-testid="stSidebar"] .stSelectbox label,
-  section[data-testid="stSidebar"] .stSlider label { color: #7ab3e0 !important; font-size: 0.78rem !important; }
+  section[data-testid="stSidebar"] .stSlider label { color: var(--c-text) !important; font-size: 0.78rem !important; }
 
   /* Headers */
   h1 { font-family: 'Syne', sans-serif !important; font-weight: 800 !important;
-       background: linear-gradient(135deg, #38bdf8, #818cf8, #f472b6);
+       background: var(--c-grad);
        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
        letter-spacing: -1px; font-size: 2.4rem !important; }
-  h2 { font-family: 'Syne', sans-serif !important; color: #38bdf8 !important;
+  h2 { font-family: 'Syne', sans-serif !important; color: var(--c-h2) !important;
        font-size: 1.1rem !important; letter-spacing: 2px; text-transform: uppercase;
-       border-bottom: 1px solid #1e3a5f; padding-bottom: 6px; }
-  h3 { font-family: 'Syne', sans-serif !important; color: #818cf8 !important;
+       border-bottom: 1px solid var(--c-brd); padding-bottom: 6px; }
+  h3 { font-family: 'Syne', sans-serif !important; color: var(--c-h3) !important;
        font-size: 0.95rem !important; }
 
   /* Metric cards */
   .metric-card {
-    background: linear-gradient(135deg, #0f1f35, #0d1928);
-    border: 1px solid #1e3a5f;
+    background: var(--c-card);
+    border: 1px solid var(--c-brd);
     border-radius: 10px;
     padding: 14px 18px;
     margin: 6px 0;
   }
-  .metric-label { font-size: 0.68rem; color: #4a7fa5; letter-spacing: 2px; text-transform: uppercase; }
-  .metric-value { font-size: 1.5rem; font-weight: 600; color: #38bdf8; font-family: 'JetBrains Mono'; }
-  .metric-sub   { font-size: 0.72rem; color: #5a8fa8; }
+  .metric-label { font-size: 0.68rem; color: var(--c-card-l); letter-spacing: 2px; text-transform: uppercase; }
+  .metric-value { font-size: 1.5rem; font-weight: 600; color: var(--c-card-v); font-family: 'JetBrains Mono'; }
+  .metric-sub   { font-size: 0.72rem; color: var(--c-card-s); }
 
   /* Pipeline */
   .pipeline-box {
-    background: linear-gradient(135deg, #0f1f35, #0a1520);
-    border: 1px solid #1e3a5f;
+    background: var(--c-card);
+    border: 1px solid var(--c-brd);
     border-radius: 10px;
     padding: 18px;
     margin: 10px 0;
     text-align: center;
   }
   .pipeline-icon { font-size: 2rem; }
-  .pipeline-label { font-size: 0.7rem; color: #38bdf8; letter-spacing: 2px; text-transform: uppercase; margin-top: 4px; }
+  .pipeline-label { font-size: 0.7rem; color: var(--c-card-v); letter-spacing: 2px; text-transform: uppercase; margin-top: 4px; }
 
   /* Tables */
   .hw-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
-  .hw-table th { background: #0f1f35; color: #38bdf8; padding: 8px 12px;
-                 text-align: left; border-bottom: 1px solid #1e3a5f; }
-  .hw-table td { padding: 8px 12px; border-bottom: 1px solid #0f1f35; }
-  .hw-table tr:nth-child(even) td { background: #0a1520; }
+  .hw-table th { background: var(--c-tab-th); color: var(--c-card-v); padding: 8px 12px;
+                 text-align: left; border-bottom: 1px solid var(--c-brd); }
+  .hw-table td { padding: 8px 12px; border-bottom: 1px solid var(--c-tab-th); }
+  .hw-table tr:nth-child(even) td { background: var(--c-tab-e); }
+  .hw-table tr:nth-child(odd) td { background: var(--c-tab-o); }
 
   /* Info box */
   .info-box {
-    background: linear-gradient(135deg, #0a1e35, #081428);
-    border-left: 3px solid #38bdf8;
+    background: var(--c-info);
+    border-left: 3px solid var(--c-card-v);
     border-radius: 0 8px 8px 0;
     padding: 12px 16px;
     margin: 8px 0;
     font-size: 0.8rem;
-    color: #8ab4d4;
+    color: var(--c-info-t);
   }
-  .formula { font-family: 'JetBrains Mono'; color: #818cf8; font-size: 0.85rem;
-             background: #080c14; padding: 8px 14px; border-radius: 6px;
-             border: 1px solid #1e3a5f; margin: 6px 0; display: inline-block; }
+  .formula { font-family: 'JetBrains Mono'; color: var(--c-h3); font-size: 0.85rem;
+             background: var(--c-form); padding: 8px 14px; border-radius: 6px;
+             border: 1px solid var(--c-brd); margin: 6px 0; display: inline-block; }
 
   /* Stokes bar */
-  .stokes-bar-bg { background: #0f1f35; border-radius: 4px; height: 8px; margin: 4px 0; }
+  .stokes-bar-bg { background: var(--c-tab-th); border-radius: 4px; height: 8px; margin: 4px 0; }
   .stokes-bar-fill { height: 8px; border-radius: 4px; transition: width 0.3s; }
 
   /* Script box */
   .script-box {
-    background: #050a12;
-    border: 1px solid #1e3a5f;
+    background: var(--c-script);
+    border: 1px solid var(--c-brd);
     border-radius: 10px;
     padding: 20px;
     font-size: 0.82rem;
-    color: #8ab4d4;
+    color: var(--c-scrt-t);
     line-height: 1.7;
   }
-  .script-time { color: #f472b6; font-weight: 600; }
+  .script-time { color: var(--c-card-v); font-weight: 600; }
 
-  div[data-testid="stMetricValue"] { color: #38bdf8 !important; font-family: 'JetBrains Mono' !important; }
+  div[data-testid="stMetricValue"] { color: var(--c-card-v) !important; font-family: 'JetBrains Mono' !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -316,7 +394,7 @@ def animate_polarization(E: np.ndarray, n_frames: int = 300) -> plt.Figure:
     ax.set_ylim(-lim, lim)
     ax.set_xlabel('Ex', fontsize=9)
     ax.set_ylabel('Ey', fontsize=9)
-    ax.set_title('Polarization Ellipse', fontsize=10, pad=8)
+    ax.set_title('Polarization Graph', fontsize=10, pad=8)
     ax.set_aspect('equal')
     fig.tight_layout(pad=1.0)
     return fig
@@ -449,11 +527,11 @@ def animated_pipeline_html(E_stages: list, use_qwp: bool, use_hwp: bool, intensi
 <meta charset="utf-8">
 <style>
   * {{ box-sizing: border-box; margin: 0; padding: 0; }}
-  body {{ background: #07101f; font-family: 'Courier New', monospace; }}
+  body {{ background: {HTML_BG}; font-family: 'Courier New', monospace; color: {FG}; }}
   canvas {{ display: block; width: 100%; }}
   .legend {{
     display: flex; gap: 20px; padding: 6px 12px;
-    background: #07101f; border-top: 1px solid #1e3a5f;
+    background: {HTML_BG}; border-top: 1px solid {GRID};
   }}
   .leg-item {{ display: flex; align-items: center; gap: 6px; font-size: 11px; color: #4a7fa5; }}
   .leg-dot {{ width: 28px; height: 3px; border-radius: 2px; }}
@@ -727,7 +805,7 @@ function drawElement(x, y, w, h, label, color, active, s) {{
 function frame() {{
   const cw = W(), ch = H;
   ctx.clearRect(0, 0, cw, ch);
-  ctx.fillStyle = '#07101f';
+  ctx.fillStyle = '{HTML_BG}';
   ctx.fillRect(0, 0, cw, ch);
 
   // layout
@@ -772,10 +850,10 @@ function frame() {{
 
   // ellipse section label
   ctx.save();
-  ctx.fillStyle = '#1e3a5f';
+  ctx.fillStyle = '{FG}';
   ctx.font = '10px Courier New';
   ctx.textAlign = 'left';
-  ctx.fillText('polarization ellipse at each stage:', 8, ellY - 28);
+  ctx.fillText('polarization graph at each stage:', 8, ellY - 28);
   ctx.restore();
 
   t += 0.055;
@@ -922,7 +1000,7 @@ st.markdown("")
 col_left, col_right = st.columns([1, 1.55])
 
 with col_left:
-    st.markdown("## Polarization Ellipse")
+    st.markdown("## Polarization Graph")
     fig_ell = animate_polarization(E_mid)
     st.pyplot(fig_ell, use_container_width=True)
     plt.close(fig_ell)

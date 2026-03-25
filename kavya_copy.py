@@ -761,7 +761,7 @@ function frame() {{
 
   // elements
   for (let i = 0; i < totalEl; i++) {{
-    drawElement(elXs[i], elY, elW, elH, ELEMS[i].label, ELEMS[i].color, isActive(i));
+    drawElement(elXs[i], elY, elW, elH, ELEMS[i].label, ELEMS[i].color, isActive(i), stages[i] || stages[0]);
   }}
 
   // polarization ellipses below each element
