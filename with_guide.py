@@ -7,8 +7,6 @@ from matplotlib.patches import FancyArrowPatch
 import matplotlib.gridspec as gridspec
 from matplotlib.colors import LinearSegmentedColormap
 
-import threading
-import http.server
 import os
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -19,23 +17,15 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# ── Background file server for polarization_explainer.html ──────────────────
-_SERVE_PORT = 8502
-_SERVE_DIR  = os.path.dirname(os.path.abspath(__file__))
-
-def _start_file_server():
-    os.chdir(_SERVE_DIR)
-    handler = http.server.SimpleHTTPRequestHandler
-    handler.log_message = lambda *a: None  # silence logs
+# ── Helper: read the explainer HTML for inline rendering ─────────────────────
+def _load_explainer_html() -> str:
+    """Read polarization_explainer.html from the same directory as this script."""
+    html_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "polarization_explainer.html")
     try:
-        server = http.server.HTTPServer(("", _SERVE_PORT), handler)
-        server.serve_forever()
-    except OSError:
-        pass  # port already in use (already running)
-
-if not any(t.name == "file_server" for t in threading.enumerate()):
-    t = threading.Thread(target=_start_file_server, name="file_server", daemon=True)
-    t.start()
+        with open(html_path, "r", encoding="utf-8") as f:
+            return f.read()
+    except FileNotFoundError:
+        return "<p style='color:red'>polarization_explainer.html not found.</p>"
 
 
 BG = '#080c14'
@@ -45,6 +35,13 @@ ACCENT2 = '#818cf8'
 ACCENT3 = '#f472b6'
 GRID    = '#0f1f35'
 HTML_BG = '#07101f'
+
+# ── Theory Guide Dialog ──────────────────────────────────────────────────────
+@st.dialog("Theory Guide: Polarization Optics", width="large")
+def show_theory_dialog():
+    html_content = _load_explainer_html()
+    # Add a bit of padding/styling for the dialog container if needed
+    components.html(html_content, height=800, scrolling=True)
 
 st.markdown("""
 <style>
@@ -843,41 +840,8 @@ frame();
 
 with st.sidebar:
     # ── Theory link ──────────────────────────────────────────
-    components.html("""
-    <style>
-    .theory-btn {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        width: 100%;
-        padding: 10px 16px;
-        margin-bottom: 4px;
-        background: linear-gradient(135deg, #0f1f35, #0d1928);
-        border: 1px solid #38bdf8;
-        border-radius: 10px;
-        color: #38bdf8;
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 0.82rem;
-        letter-spacing: 1.5px;
-        text-transform: uppercase;
-        text-decoration: none;
-        cursor: pointer;
-        transition: all 0.2s;
-        box-shadow: 0 0 12px rgba(56,189,248,0.15);
-        box-sizing: border-box;
-    }
-    .theory-btn:hover {
-        background: linear-gradient(135deg, #162847, #0f1f35);
-        box-shadow: 0 0 20px rgba(56,189,248,0.3);
-        color: #7dd3fc;
-    }
-    body { margin: 0; padding: 0; background: transparent; }
-    </style>
-    <button class="theory-btn" onclick="window.open('http://localhost:8502/polarization_explainer.html', '_blank')">
-        📖 &nbsp; Theory Guide
-    </button>
-    """, height=58)
+    if st.button("📖 &nbsp; Theory Guide", use_container_width=True, type="primary"):
+         show_theory_dialog()
 
     st.markdown("## ⚙️ Controls")
 
