@@ -7,10 +7,6 @@ from matplotlib.patches import FancyArrowPatch
 import matplotlib.gridspec as gridspec
 from matplotlib.colors import LinearSegmentedColormap
 
-import threading
-import http.server
-import os
-
 # ─────────────────────────────────────────────────────────────────────────────
 st.set_page_config(
     page_title="Polarization Optics Visual Lab",
@@ -19,57 +15,91 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# ── Background file server for polarization_explainer.html ──────────────────
-_SERVE_PORT = 8502
-_SERVE_DIR  = os.path.dirname(os.path.abspath(__file__))
+is_light_mode = st.sidebar.toggle("☀️ Light Mode", value=False)
 
-def _start_file_server():
-    os.chdir(_SERVE_DIR)
-    handler = http.server.SimpleHTTPRequestHandler
-    handler.log_message = lambda *a: None  # silence logs
-    try:
-        server = http.server.HTTPServer(("", _SERVE_PORT), handler)
-        server.serve_forever()
-    except OSError:
-        pass  # port already in use (already running)
+if is_light_mode:
+    c_bg = "#f4f4f5"
+    c_text = "#18181b"
+    c_sb_bg = "linear-gradient(180deg, #e4e4e7 0%, #f4f4f5 100%)"
+    c_brd = "#d4d4d8"
+    c_sb_text = "#3f3f46"
+    c_grad = "linear-gradient(135deg, #0284c7, #4f46e5, #db2777)"
+    c_h2 = "#0284c7"
+    c_h3 = "#4f46e5"
+    c_card = "linear-gradient(135deg, #f4f4f5, #e4e4e7)"
+    c_card_l = "#52525b"
+    c_card_v = "#0284c7"
+    c_card_s = "#71717a"
+    c_tab_th = "#e4e4e7"
+    c_tab_o = "#f4f4f5"
+    c_tab_e = "#e4e4e7"
+    c_info = "linear-gradient(135deg, #e0f2fe, #f0f9ff)"
+    c_info_t = "#0369a1"
+    c_form = "#ffffff"
+    c_script = "#ffffff"
+    c_scrt_t = "#3f3f46"
+    
+    BG = '#f4f4f5'
+    FG = '#18181b'
+    ACCENT  = '#0ea5e9'
+    ACCENT2 = '#6366f1'
+    ACCENT3 = '#ec4899'
+    GRID    = '#d4d4d8'
+    HTML_BG = '#ffffff'
+else:
+    c_bg = "#080c14"
+    c_text = "#c9d4e8"
+    c_sb_bg = "linear-gradient(180deg, #0d1421 0%, #0a1628 100%)"
+    c_brd = "#1e3a5f"
+    c_sb_text = "#a8c0de"
+    c_grad = "linear-gradient(135deg, #38bdf8, #818cf8, #f472b6)"
+    c_h2 = "#38bdf8"
+    c_h3 = "#818cf8"
+    c_card = "linear-gradient(135deg, #0f1f35, #0d1928)"
+    c_card_l = "#4a7fa5"
+    c_card_v = "#38bdf8"
+    c_card_s = "#5a8fa8"
+    c_tab_th = "#0f1f35"
+    c_tab_o = "#080c14"
+    c_tab_e = "#0a1520"
+    c_info = "linear-gradient(135deg, #0a1e35, #081428)"
+    c_info_t = "#8ab4d4"
+    c_form = "#080c14"
+    c_script = "#050a12"
+    c_scrt_t = "#8ab4d4"
+    
+    BG = '#080c14'
+    FG = '#c9d4e8'
+    ACCENT  = '#38bdf8'
+    ACCENT2 = '#818cf8'
+    ACCENT3 = '#f472b6'
+    GRID    = '#0f1f35'
+    HTML_BG = '#07101f'
 
-if not any(t.name == "file_server" for t in threading.enumerate()):
-    t = threading.Thread(target=_start_file_server, name="file_server", daemon=True)
-    t.start()
-
-
-BG = '#080c14'
-FG = '#c9d4e8'
-ACCENT  = '#38bdf8'
-ACCENT2 = '#818cf8'
-ACCENT3 = '#f472b6'
-GRID    = '#0f1f35'
-HTML_BG = '#07101f'
-
-st.markdown("""
+st.markdown(f"""
 <style>
-  :root {
-    --c-bg: #080c14;
-    --c-text: #c9d4e8;
-    --c-sb-bg: linear-gradient(180deg, #0d1421 0%, #0a1628 100%);
-    --c-brd: #1e3a5f;
-    --c-sb-text: #a8c0de;
-    --c-grad: linear-gradient(135deg, #38bdf8, #818cf8, #f472b6);
-    --c-h2: #38bdf8;
-    --c-h3: #818cf8;
-    --c-card: linear-gradient(135deg, #0f1f35, #0d1928);
-    --c-card-l: #4a7fa5;
-    --c-card-v: #38bdf8;
-    --c-card-s: #5a8fa8;
-    --c-tab-th: #0f1f35;
-    --c-tab-o: #080c14;
-    --c-tab-e: #0a1520;
-    --c-info: linear-gradient(135deg, #0a1e35, #081428);
-    --c-info-t: #8ab4d4;
-    --c-form: #080c14;
-    --c-script: #050a12;
-    --c-scrt-t: #8ab4d4;
-  }
+  :root {{
+    --c-bg: {c_bg};
+    --c-text: {c_text};
+    --c-sb-bg: {c_sb_bg};
+    --c-brd: {c_brd};
+    --c-sb-text: {c_sb_text};
+    --c-grad: {c_grad};
+    --c-h2: {c_h2};
+    --c-h3: {c_h3};
+    --c-card: {c_card};
+    --c-card-l: {c_card_l};
+    --c-card-v: {c_card_v};
+    --c-card-s: {c_card_s};
+    --c-tab-th: {c_tab_th};
+    --c-tab-o: {c_tab_o};
+    --c-tab-e: {c_tab_e};
+    --c-info: {c_info};
+    --c-info-t: {c_info_t};
+    --c-form: {c_form};
+    --c-script: {c_script};
+    --c-scrt-t: {c_scrt_t};
+  }}
 </style>
 """, unsafe_allow_html=True)
 
@@ -842,48 +872,10 @@ frame();
 # ─────────────────────────────────────────────────────────────────────────────
 
 with st.sidebar:
-    # ── Theory link ──────────────────────────────────────────
-    components.html("""
-    <style>
-    .theory-btn {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        width: 100%;
-        padding: 10px 16px;
-        margin-bottom: 4px;
-        background: linear-gradient(135deg, #0f1f35, #0d1928);
-        border: 1px solid #38bdf8;
-        border-radius: 10px;
-        color: #38bdf8;
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 0.82rem;
-        letter-spacing: 1.5px;
-        text-transform: uppercase;
-        text-decoration: none;
-        cursor: pointer;
-        transition: all 0.2s;
-        box-shadow: 0 0 12px rgba(56,189,248,0.15);
-        box-sizing: border-box;
-    }
-    .theory-btn:hover {
-        background: linear-gradient(135deg, #162847, #0f1f35);
-        box-shadow: 0 0 20px rgba(56,189,248,0.3);
-        color: #7dd3fc;
-    }
-    body { margin: 0; padding: 0; background: transparent; }
-    </style>
-    <button class="theory-btn" onclick="window.open('http://localhost:8502/polarization_explainer.html', '_blank')">
-        📖 &nbsp; Theory Guide
-    </button>
-    """, height=58)
-
     st.markdown("## ⚙️ Controls")
 
     if st.button("💡 Replay Tour", use_container_width=True):
         components.html("""<script>window.parent.localStorage.removeItem("tour_done"); window.parent.location.reload();</script>""", height=0, width=0)
-
 
     # ── Mode ──────────────────────────────────────────────
     st.markdown("### Mode")
